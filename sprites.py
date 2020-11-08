@@ -6,6 +6,10 @@ from settings import *
 vec = pygame.Vector2
 
 
+def collide_rect2(one, two):
+    return one.colliderect(two.rect)
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -55,6 +59,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.collide_rect.center
         # ----------------------------- #
 
+        self.rotate()
+
     def move(self, keys):
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -72,6 +78,22 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.acc.y = +self.player_vel
             self.direction = "up"
+
+    def rotate(self):
+
+        # -------------------------ROTATION----------------------------- #
+        # -------------------------------------------------------------- #
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        vec_x, vec_y = mouse_x - self.pos.x, mouse_y - self.pos.y
+
+        angle = math.degrees(math.atan2(vec_x, vec_y))
+        angle = (180 / math.pi) * -math.atan2(vec_y, vec_x)
+
+        self.image = pygame.transform.rotate(self._image, angle)
+        self.rect = self.image.get_rect(center=self.rect.midbottom)
+
+        print(angle)
 
     def wall_collide(self, dir_):
         if dir_ == "x":
