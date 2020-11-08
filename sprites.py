@@ -14,18 +14,18 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
-        self.gap = 2
+        self.gap = 4
 
         self.player_size = 25
         self._image = pygame.Surface(
-            (self.player_size - 2, self.player_size - 2), pygame.SRCALPHA)
+            (self.player_size - self.gap, self.player_size - self.gap), pygame.SRCALPHA)
 
         self.image = self._image
 
         self.rect = self.image.get_rect(center=(x + self.gap, y + self.gap))
         self.collide_rect = pygame.Rect(0, 0, 25, 25)
 
-        self.image.fill(RED)
+        self.image.fill(PLAYER_COLOR)
 
         self.pos = vec(x + self.gap, y + self.gap)
         self.vel = vec(0, 0)
@@ -59,7 +59,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.collide_rect.center
         # ----------------------------- #
 
-        self.rotate()
+        self.screen_boundary()
+        # self.rotate()
 
     def move(self, keys):
 
@@ -79,6 +80,19 @@ class Player(pygame.sprite.Sprite):
             self.acc.y = +self.player_vel
             self.direction = "up"
 
+    def screen_boundary(self):
+        if self.rect.right > SCREEN_WIDTH:
+            print("Right")
+
+        elif self.rect.left < 0:
+            print("Left")
+
+        elif self.rect.bottom > SCREEN_HEIGHT:
+            print("Bottom")
+
+        elif self.rect.top < 0:
+            print("Top")
+
     def rotate(self):
 
         # -------------------------ROTATION----------------------------- #
@@ -90,10 +104,8 @@ class Player(pygame.sprite.Sprite):
         angle = math.degrees(math.atan2(vec_x, vec_y))
         angle = (180 / math.pi) * -math.atan2(vec_y, vec_x)
 
-        self.image = pygame.transform.rotate(self._image, angle)
+        self.image = pygame.transform.rotate(self._image, (angle))
         self.rect = self.image.get_rect(center=self.rect.midbottom)
-
-        print(angle)
 
     def wall_collide(self, dir_):
         if dir_ == "x":
@@ -128,21 +140,32 @@ class Player(pygame.sprite.Sprite):
                 self.collide_rect.centery = self.pos.y
 
 
-class Wall(pygame.sprite.Sprite):
+class Tile(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
         self.gap = 2
 
         self.image = pygame.Surface(
-            (WALL_SIZE - self.gap, WALL_SIZE - self.gap))
+            (TILE_SIZE - self.gap, TILE_SIZE - self.gap))
         self.rect = self.image.get_rect(
             center=(x + self.gap / 2, y + self.gap / 2))
-        self.image.fill(WHITE)
+        self.image.fill(WALL_COLOR)
         self.pos = vec(x + self.gap / 2, y + self.gap / 2)
 
     def update(self):
         self.rect.topleft = self.pos
+
+
+class Wall(Tile):
+    def __init__(self, x, y):
+        super().__init__(self, x, y)
+
+
+class Portal(Tile):
+    def __init__(self, x, y):
+        super().__init__(self, x, y)
+        self.image.fill((139, 109, 156))
 
 
 class Ray(pygame.sprite.Sprite):

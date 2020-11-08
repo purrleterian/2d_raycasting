@@ -1,6 +1,7 @@
 import pygame
 from settings import *
 from sprites import *
+from rooms import *
 
 
 class Game:
@@ -21,20 +22,29 @@ class Game:
     def load_data(self):
         pass
 
+    def load_room(self, room):
+        # Clear the room before loading a new room
+        self.walls.empty()
+        self.tiles.empty()
+
+        for y, column in enumerate(room.layout):
+            for x, tile in enumerate(column):
+                if tile == 1:
+                    wall = Wall(x*TILE_SIZE, y*TILE_SIZE)
+                    self.tiles.add(wall)
+                    self.walls.add(wall)
+
     def new(self):
         # Add Sprite Groups below
         self.all_sprites = pygame.sprite.Group()
+        self.tiles = pygame.sprite.Group()
         self.walls = pygame.sprite.Group()
 
         # Add Sprites below
-        for y, column in enumerate(WORLD_MAP):
-            for x, space in enumerate(column):
-                if space == 1:
-                    wall = Wall(self, x*WALL_SIZE, y*WALL_SIZE)
-                    self.walls.add(wall)
+        self.load_room(main_room)
 
-        for wall in self.walls:
-            self.all_sprites.add(wall)
+        for tile in self.tiles:
+            self.all_sprites.add(tile)
 
         self.player = Player(self, SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.all_sprites.add(self.player)
@@ -66,10 +76,10 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
-        self.walls.update()
+        self.tiles.update()
 
     def draw(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(BACKGROUND_COLOR)
         pygame.display.set_caption(f"{self.clock.get_fps():.2F} FPS")
 
         self.all_sprites.draw(self.screen)
