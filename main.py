@@ -1,7 +1,7 @@
 import pygame
 from settings import *
 from sprites import *
-from rooms import *
+from rooms import rooms_dict
 
 
 class Game:
@@ -26,6 +26,11 @@ class Game:
         # Clear the room before loading a new room
         self.walls.empty()
         self.tiles.empty()
+        for e in self.all_sprites:
+            if isinstance(e, Tile):
+                e.kill()
+
+        print("Loading room")
 
         for y, column in enumerate(room.layout):
             for x, tile in enumerate(column):
@@ -34,6 +39,9 @@ class Game:
                     self.tiles.add(wall)
                     self.walls.add(wall)
 
+        for tile in self.tiles:
+            self.all_sprites.add(tile)
+
     def new(self):
         # Add Sprite Groups below
         self.all_sprites = pygame.sprite.Group()
@@ -41,10 +49,7 @@ class Game:
         self.walls = pygame.sprite.Group()
 
         # Add Sprites below
-        self.load_room(main_room)
-
-        for tile in self.tiles:
-            self.all_sprites.add(tile)
+        self.load_room(rooms_dict[(1, 1)])
 
         self.player = Player(self, SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.all_sprites.add(self.player)
@@ -80,7 +85,8 @@ class Game:
 
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
-        pygame.display.set_caption(f"{self.clock.get_fps():.2F} FPS")
+        pygame.display.set_caption(
+            f"Rogue Like | {self.clock.get_fps():.2F} FPS")
 
         self.all_sprites.draw(self.screen)
         pygame.display.flip()

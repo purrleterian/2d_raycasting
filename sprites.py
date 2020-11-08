@@ -1,7 +1,7 @@
 import pygame
 import math
 from settings import *
-
+from rooms import rooms_dict
 
 vec = pygame.Vector2
 
@@ -32,6 +32,7 @@ class Player(pygame.sprite.Sprite):
         self.acc = vec(0, 0)
 
         self.player_vel = 0.9
+        self.level_position = [1, 1]
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -81,17 +82,27 @@ class Player(pygame.sprite.Sprite):
             self.direction = "up"
 
     def screen_boundary(self):
-        if self.rect.right > SCREEN_WIDTH:
-            print("Right")
+        if self.rect.left > SCREEN_WIDTH:
+            self.pos.x = 0
+            self.level_position[0] += 1
+            self.game.load_room(rooms_dict[tuple(self.level_position)])
 
-        elif self.rect.left < 0:
-            print("Left")
+        elif self.rect.right < 0:
+            self.pos.x = SCREEN_WIDTH
+            self.level_position[0] -= 1
+            self.game.load_room(rooms_dict[tuple(self.level_position)])
 
-        elif self.rect.bottom > SCREEN_HEIGHT:
-            print("Bottom")
+        elif self.rect.top > SCREEN_HEIGHT:
+            self.pos.y = 0
+            self.level_position[1] += 1
+            self.game.load_room(rooms_dict[tuple(self.level_position)])
 
-        elif self.rect.top < 0:
-            print("Top")
+        elif self.rect.bottom < 0:
+            self.pos.y = SCREEN_HEIGHT
+            self.level_position[1] -= 1
+            self.game.load_room(rooms_dict[tuple(self.level_position)])
+
+        print(self.level_position)
 
     def rotate(self):
 
