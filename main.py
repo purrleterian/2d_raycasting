@@ -27,7 +27,6 @@ class Game:
         self.walls = pygame.sprite.Group()
 
         # Add Sprites below
-        self.player = Player(self)
         for y, column in enumerate(WORLD_MAP):
             for x, space in enumerate(column):
                 if space == 1:
@@ -37,6 +36,7 @@ class Game:
         for wall in self.walls:
             self.all_sprites.add(wall)
 
+        self.player = Player(self, SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.all_sprites.add(self.player)
         # ----------------- #
         # ------ RUN ------ #
@@ -67,10 +67,6 @@ class Game:
     def update(self):
         self.all_sprites.update()
         self.walls.update()
-
-        for wall in self.walls:
-            if wall.rect.colliderect(self.player.rect):
-                print("Collision")
 
     def draw(self):
         self.screen.fill(BLACK)
