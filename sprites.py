@@ -1,7 +1,7 @@
 import pygame
 import math
 from settings import *
-from rooms import rooms_dict
+from rooms import level
 
 vec = pygame.Vector2
 
@@ -34,11 +34,17 @@ class Player(pygame.sprite.Sprite):
         self.player_vel = 0.9
         self.level_position = [1, 1]
 
+        self.projectiles = pygame.sprite.Group()
+        self.projectile_speed = 5
+
+        self.direction = "up"
+
     def update(self):
         keys = pygame.key.get_pressed()
         self.acc = vec(0, 0)
 
         self.move(keys)
+        self.screen_boundary()
         if not keys[pygame.K_LSHIFT]:
             self.player_vel = 0.9
 
@@ -60,7 +66,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.collide_rect.center
         # ----------------------------- #
 
-        self.screen_boundary()
         # self.rotate()
 
     def move(self, keys):
@@ -75,34 +80,45 @@ class Player(pygame.sprite.Sprite):
 
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.acc.y = -self.player_vel
-            self.direction = "down"
+            self.direction = "up"
 
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.acc.y = +self.player_vel
-            self.direction = "up"
+            self.direction = "down"
+
+        # Diagonal
+        if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and (keys[pygame.K_UP] or keys[pygame.K_w]):
+            self.direction = "topleft"
+
+        if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and (keys[pygame.K_UP] or keys[pygame.K_w]):
+            self.direction = "topright"
+
+        if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and (keys[pygame.K_DOWN] or keys[pygame.K_s]):
+            self.direction = "bottomleft"
+
+        if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and (keys[pygame.K_DOWN] or keys[pygame.K_s]):
+            self.direction = "bottomright"
 
     def screen_boundary(self):
-        if self.rect.left > SCREEN_WIDTH:
-            self.pos.x = 0
+        if self.rect.left > SCREEN_WIDTH - self.player_size // 2:
+            self.pos.x = self.player_size
             self.level_position[0] += 1
-            self.game.load_room(rooms_dict[tuple(self.level_position)])
+            self.game.load_room(level[tuple(self.level_position)])
 
-        elif self.rect.right < 0:
-            self.pos.x = SCREEN_WIDTH
+        elif self.rect.right < self.player_size//2:
+            self.pos.x = SCREEN_WIDTH - self.player_size
             self.level_position[0] -= 1
-            self.game.load_room(rooms_dict[tuple(self.level_position)])
+            self.game.load_room(level[tuple(self.level_position)])
 
-        elif self.rect.top > SCREEN_HEIGHT:
-            self.pos.y = 0
+        elif self.rect.top > SCREEN_HEIGHT - self.player_size//2:
+            self.pos.y = self.player_size
             self.level_position[1] += 1
-            self.game.load_room(rooms_dict[tuple(self.level_position)])
+            self.game.load_room(level[tuple(self.level_position)])
 
-        elif self.rect.bottom < 0:
-            self.pos.y = SCREEN_HEIGHT
+        elif self.rect.bottom < self.player_size//2:
+            self.pos.y = SCREEN_HEIGHT - self.player_size
             self.level_position[1] -= 1
-            self.game.load_room(rooms_dict[tuple(self.level_position)])
-
-        print(self.level_position)
+            self.game.load_room(level[tuple(self.level_position)])
 
     def rotate(self):
 
@@ -117,6 +133,12 @@ class Player(pygame.sprite.Sprite):
 
         self.image = pygame.transform.rotate(self._image, (angle))
         self.rect = self.image.get_rect(center=self.rect.midbottom)
+
+    def shoot(self):
+        proj = Projectile(self)
+
+        self.game.all_sprites.add(proj)
+        self.projectiles.add(proj)
 
     def wall_collide(self, dir_):
         if dir_ == "x":
@@ -151,6 +173,63 @@ class Player(pygame.sprite.Sprite):
                 self.collide_rect.centery = self.pos.y
 
 
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, player):
+        pygame.sprite.Sprite.__init__(self)
+        self.player = player
+
+        self.x, self.y = self.player.rect.center
+
+        self.image = pygame.Surface((10, 10))
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+        self.image.fill(PLAYER_COLOR)
+
+        self.pos = vec(self.x, self.y)
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
+
+        self.direction = self.player.direction
+
+        self.projectile_speed = 3
+
+    def update(self):
+        print(self.direction)
+        if self.direction == "right":
+            self.acc = vec(self.projectile_speed, 0)
+
+        elif self.direction == "left":
+            self.acc = vec(-self.projectile_speed, 0)
+
+        elif self.direction == "up":
+            self.acc = vec(0, -self.projectile_speed)
+
+        elif self.direction == "down":
+            self.acc = vec(0, self.projectile_speed)
+
+        # Diagonal
+
+        if self.direction == "topright":
+            self.acc = vec(self.projectile_speed, -self.projectile_speed)
+
+        elif self.direction == "topleft":
+            self.acc = vec(-self.projectile_speed, -self.projectile_speed)
+
+        elif self.direction == "bottomright":
+            self.acc = vec(self.projectile_speed, self.projectile_speed)
+
+        elif self.direction == "bottomleft":
+            self.acc = vec(-self.projectile_speed, self.projectile_speed)
+
+        self.acc.x += self.vel.x * AIR_FRICTION
+        self.acc.y += self.vel.y * AIR_FRICTION
+
+        self.vel += self.acc
+        self.pos += self.vel + 0.5 * self.acc
+
+        self.rect.center = self.pos
+
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -171,34 +250,3 @@ class Tile(pygame.sprite.Sprite):
 class Wall(Tile):
     def __init__(self, x, y):
         super().__init__(self, x, y)
-
-
-class Portal(Tile):
-    def __init__(self, x, y):
-        super().__init__(self, x, y)
-        self.image.fill((139, 109, 156))
-
-
-class Ray(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.game = game
-
-        self.image = pygame.Surface((10, 10), pygame.SRCALPHA)
-        self.image.set_colorkey(BLACK)
-        self.rect = self.image.get_rect(topleft=(x, y))
-
-        self.ray_dir = vec(1, 0)
-        self.pos = vec(x, y)
-
-    def update(self):
-
-        self.rect.topleft = self.pos
-        pygame.draw.line(self.image, RED, (0, 0),
-                         (self.ray_dir.x*10, self.ray_dir.y*10))
-
-    def cast(self, wall):
-        x1 = wall.pos.x
-        y1 = wall.pos.y
-        x2 = wall.pos.x+wall.image.get_height()
-        y2 = wall.pos.y+wall.image.get_height()

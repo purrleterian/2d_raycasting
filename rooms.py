@@ -1,5 +1,3 @@
-import pygame
-from settings import *
 from rooms_lists import *
 
 
@@ -19,7 +17,7 @@ bottom_left_room = Room(bottom_left_room_layout, (0, 2))
 top_right_room = Room(top_right_room_layout, (2, 0))
 bottom_right_room = Room(bottom_right_room_layout, (2, 2))
 
-rooms_dict = {
+level = {
     top_room.level_position: top_room,
     top_left_room.level_position: top_left_room,
     bottom_left_room.level_position: bottom_left_room,

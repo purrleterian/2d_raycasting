@@ -1,7 +1,8 @@
 import pygame
+from pygame import mouse
 from settings import *
 from sprites import *
-from rooms import rooms_dict
+from rooms import level
 
 
 class Game:
@@ -30,8 +31,6 @@ class Game:
             if isinstance(e, Tile):
                 e.kill()
 
-        print("Loading room")
-
         for y, column in enumerate(room.layout):
             for x, tile in enumerate(column):
                 if tile == 1:
@@ -49,10 +48,11 @@ class Game:
         self.walls = pygame.sprite.Group()
 
         # Add Sprites below
-        self.load_room(rooms_dict[(1, 1)])
+        self.load_room(level[(1, 1)])
 
         self.player = Player(self, SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         self.all_sprites.add(self.player)
+
         # ----------------- #
         # ------ RUN ------ #
         self.run()
@@ -79,14 +79,25 @@ class Game:
                         self.playing = False
                     self.running = False
 
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.player.shoot()
+
     def update(self):
         self.all_sprites.update()
         self.tiles.update()
 
+        for proj in self.player.projectiles:
+            wall_hits = pygame.sprite.spritecollide(proj, self.tiles, False)
+            if wall_hits:
+                proj.kill()
+
+            if proj.pos.x > SCREEN_WIDTH or proj.pos.x < 0 or proj.pos.y > SCREEN_HEIGHT or proj.pos.y < 0:
+                proj.kill()
+
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
         pygame.display.set_caption(
-            f"Rogue Like | {self.clock.get_fps():.2F} FPS")
+            f"Dungeon Crawler | {self.clock.get_fps():.2F} FPS")
 
         self.all_sprites.draw(self.screen)
         pygame.display.flip()
